@@ -1812,6 +1812,50 @@ private:
 		void processKernel(KernelPatcher &patcher, DeviceInfo *info) override;
 		void processFramebufferKext(KernelPatcher &patcher, size_t index, mach_vm_address_t address, size_t size) override;
 	} modDisplayDataBufferEarlyOptimizer;
+
+
+
+	/**
+	 *  A submodule to make the apple graphics kexts GVT-g aware
+	 */
+	class GVTGAwareMaker: public PatchSubmodule {
+
+		static constexpr uint32_t VGT_PVINFO_PAGE = 0x78000;
+		/**
+		 *  The GVT-g magic 
+		 */
+		static constexpr uint64_t kGVTgMagic = 0x4776544776544776ULL;
+		
+		/**
+		 * The GVT-g magic register
+		 * 
+		 * GVT-g checks its content for being equal to the the GVT-g magic in order to
+		 * detect whether the guest is GVT-g aware.
+		 */
+		static constexpr uint32_t kGVTgMagicRegister = VGT_PVINFO_PAGE;
+
+        static void wrapKBLGVTgMagic(void *controller, uint32_t reg, uint32_t value);
+
+		//stuff to do and fix
+		void (*orgIntelAcceleratorCtor)(void*) {nullptr};
+		void *wrapIntelAcceleratorCtor(void* );
+
+		MMIOWriteInjectionDescriptor dVGT_PVINFO_PAGE {VGT_PVINFO_PAGE, wrapKBLGVTgMagic};
+		
+	public:
+		/**
+		 *  True if this fix is available for the current Intel platform
+		 */
+		//bool available {false};
+		
+		// MARK: Patch Submodule IMP
+		void init() override;
+		void processKernel(KernelPatcher &patcher, DeviceInfo *info) override;
+		void processFramebufferKext(KernelPatcher &patcher, size_t index, mach_vm_address_t address, size_t size) override;
+		void processGraphicsKext(KernelPatcher &patcher, size_t index, mach_vm_address_t address, size_t size) override;
+
+	} modGVTGAwareMaker;
+	
 	
 	/**
 	 *  A collection of shared submodules
@@ -1825,7 +1869,7 @@ private:
 	/**
 	 *  A collection of submodules
 	 */
-	PatchSubmodule *submodules[20] = {
+	PatchSubmodule *submodules[21] = {
 		&modDVMTCalcFix,
 		&modDPCDMaxLinkRateFix,
 		&modCoreDisplayClockFix,
@@ -1846,6 +1890,7 @@ private:
 		&modFramebufferDebugSupport,
 		&modMaxPixelClockOverride,
 		&modDisplayDataBufferEarlyOptimizer,
+		&modGVTGAwareMaker,
 	};
 	
 	/**
