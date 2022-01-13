@@ -1827,6 +1827,11 @@ private:
 		static constexpr uint64_t kGVTgMagic = 0x4776544776544776ULL;
 		
 		/**
+		 * Whether GVT-g is available on this cpu and enabled on the host
+		 */
+		
+		bool available = false;
+		/**
 		 * The GVT-g magic register
 		 * 
 		 * GVT-g checks its content for being equal to the the GVT-g magic in order to
@@ -1837,10 +1842,10 @@ private:
         static void wrapKBLGVTgMagic(void *controller, uint32_t reg, uint32_t value);
 
 		//stuff to do and fix
-		void (*orgIntelAcceleratorCtor)(void*) {nullptr};
-		void *wrapIntelAcceleratorCtor(void* );
+		void* (*orgIntelAcceleratorCtor)(void*) {nullptr};
+		static void *wrapIntelAcceleratorCtor(void* );
 
-		MMIOWriteInjectionDescriptor dVGT_PVINFO_PAGE {VGT_PVINFO_PAGE, wrapKBLGVTgMagic};
+		//MMIOWriteInjectionDescriptor dVGT_PVINFO_PAGE {VGT_PVINFO_PAGE, wrapKBLGVTgMagic};
 		
 	public:
 		/**

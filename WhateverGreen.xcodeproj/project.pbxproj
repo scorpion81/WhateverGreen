@@ -11,6 +11,7 @@
 		1C9CB7B01C789FF500231E41 /* kern_rad.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1C9CB7AE1C789FF500231E41 /* kern_rad.cpp */; };
 		1C9CB7B11C789FF500231E41 /* kern_rad.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 1C9CB7AF1C789FF500231E41 /* kern_rad.hpp */; };
 		2F30012424A00F2800C590C3 /* kern_igfx_pm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2F30012324A00F2800C590C3 /* kern_igfx_pm.cpp */; };
+		5B727A0627908B2D00FB84A7 /* kern_igfx_gvtg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B727A0527908B2D00FB84A7 /* kern_igfx_gvtg.cpp */; };
 		CE1970FF21C380DF00B02AB4 /* kern_nvhda.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE1970FD21C380DF00B02AB4 /* kern_nvhda.cpp */; };
 		CE19710021C380DF00B02AB4 /* kern_nvhda.hpp in Headers */ = {isa = PBXBuildFile; fileRef = CE1970FE21C380DF00B02AB4 /* kern_nvhda.hpp */; };
 		CE1F61B92432DEE800201DF4 /* kern_igfx_debug.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE1F61B82432DEE800201DF4 /* kern_igfx_debug.cpp */; };
@@ -90,6 +91,7 @@
 		1CF01C921C8CF997002DCEA3 /* Changelog.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Changelog.md; sourceTree = "<group>"; };
 		1CF01C931C8DF02E002DCEA3 /* LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
 		2F30012324A00F2800C590C3 /* kern_igfx_pm.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = kern_igfx_pm.cpp; sourceTree = "<group>"; };
+		5B727A0527908B2D00FB84A7 /* kern_igfx_gvtg.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = kern_igfx_gvtg.cpp; sourceTree = "<group>"; };
 		5B9131F2258A8EFB0008530D /* FAQ.IntelHD.en.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = FAQ.IntelHD.en.md; sourceTree = "<group>"; };
 		5B9131F3258A8F090008530D /* FAQ.IntelHD.cn.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = FAQ.IntelHD.cn.md; sourceTree = "<group>"; };
 		5B9131F4258A8F1C0008530D /* FAQ.OldPlugins.en.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = FAQ.OldPlugins.en.md; sourceTree = "<group>"; };
@@ -212,6 +214,7 @@
 				CE766ED4210763B200A84567 /* kern_guc.cpp */,
 				CE766ED5210763B200A84567 /* kern_guc.hpp */,
 				CE7FC0AC20F5622700138088 /* kern_igfx.cpp */,
+				5B727A0527908B2D00FB84A7 /* kern_igfx_gvtg.cpp */,
 				CE7FC0AD20F5622700138088 /* kern_igfx.hpp */,
 				D531F20B26BF52CA00224998 /* kern_igfx_backlight.cpp */,
 				D531F20C26BF52CA00224998 /* kern_igfx_backlight.hpp */,
@@ -484,6 +487,7 @@
 				D515168325195D58003CF0E6 /* kern_igfx_i2c_aux.cpp in Sources */,
 				CE7FC0AE20F5622700138088 /* kern_igfx.cpp in Sources */,
 				CEC8E2F020F765E700D3CA3A /* kern_cdf.cpp in Sources */,
+				5B727A0627908B2D00FB84A7 /* kern_igfx_gvtg.cpp in Sources */,
 				D5224EF125172B2500D5CF16 /* kern_igfx_clock.cpp in Sources */,
 				1C9CB7B01C789FF500231E41 /* kern_rad.cpp in Sources */,
 				D531F20D26BF52CA00224998 /* kern_igfx_backlight.cpp in Sources */,
