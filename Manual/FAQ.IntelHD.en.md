@@ -2684,12 +2684,18 @@ Starting from v1.5.5, the default delay is changed to 1 second, so in most cases
 
 </details>
 
+## Fix backlight registers on KBL, CFL and ICL platforms
+
+Certain mobile Kaby Lake, Coffee Lake and Ice Lake devices need fixing of the backlight registers. 
+Without the fix certain devices will end in a black screen when booting macOS, like seen on the Dell inspiron 3593. 
+The WateverGreen backlight registers fix can be enabled using 'enable-backlight-registers-fix' properly to 'IGPU' or using the '-igfxblr' boot argument.
+
 ## Known Issues
 
 **Compatibility**
 
 - Limited cards: HD2000, HD2500 can only be used for [IQSV](https://www.applelife.ru/threads/zavod-intel-quick-sync-video.817923/) (they are used in real Macs only for this), there are no solutions.  
-- Intel Pentium / Celeron Graphics can't be enabled, there are no solutions.  
+- Intel Pentium / Celeron Graphics can't be enabled, there are no solutions. In certain cases сan only be used for [IQSV](https://www.applelife.ru/threads/zavod-intel-quick-sync-video.817923/).  
 - HDMI black screen on Haswell platforms. Resolved by using *WEG* or macOS 10.13.4 and later.  
 - Support for 2 or more displays on Intel Skylake and newer desktops is missing or buggy. In macOS 10.14.x there is an improvement tendency.  
 - Displays do not wake up on Intel Skylake desktops and later, connecting via DisplayPort or upgrading to macOS 10.14.x may help.  
