@@ -1839,11 +1839,17 @@ private:
 		 */
 		static constexpr uint32_t kGVTgMagicRegister = VGT_PVINFO_PAGE;
 
-        static void wrapKBLGVTgMagic(void *controller, uint32_t reg, uint32_t value);
+        //static void wrapKBLGVTgMagic(void *controller, uint32_t reg, uint32_t value);
 
 		//stuff to do and fix
 		void* (*orgIntelAcceleratorCtor)(void*) {nullptr};
 		static void *wrapIntelAcceleratorCtor(void* );
+
+		void* (*orgIntelFramebufferControllerCtor)(void*) {nullptr};
+		static void* wrapIntelFramebufferControllerCtor(void*);
+
+		void* (*orgHasAccelerator)(void*) {nullptr};
+		static void* wrapHasAccelerator(void*);
 
 		//MMIOWriteInjectionDescriptor dVGT_PVINFO_PAGE {VGT_PVINFO_PAGE, wrapKBLGVTgMagic};
 		

@@ -9,6 +9,7 @@
 #include "kern_igfx.hpp"
 
 constexpr const char* log = "igfx_gvtg";
+typedef void*(*fn_ptr)(void*);
 
 // MARK: - GVT-g Awareness Setup
 
@@ -24,55 +25,97 @@ void IGFX::GVTGAwareMaker::init() {
 	requiresMMIORegistersReadAccess = true;
 	// requiresMMIORegistersWriteAccess = true;
 }
-
+	
 void IGFX::GVTGAwareMaker::processKernel(KernelPatcher &patcher, DeviceInfo *info) {
-	uint64_t gvtg_magic = callbackIGFX->readRegister32(callbackIGFX->defaultController(), VGT_PVINFO_PAGE);
-	CPUInfo::CpuGeneration generation = BaseDeviceInfo::get().cpuGeneration;
-	bool valid_cpu = generation >= CPUInfo::CpuGeneration::Skylake;
-	available = checkKernelArgument("-igfxgvtg") && gvtg_magic == kGVTgMagic && valid_cpu;
-	if (available) {
-		DBGLOG("igfx", "GVT-g is available, found GPU generation %d", generation);
-	}
-	else {
-        DBGLOG("igfx", "GVT-g is NOT available. found GPU generation %d", generation);
-	}
+	enabled = checkKernelArgument("-igfxgvtg");
+	if (enabled) {
+		SYSLOG("igfx", "GVT-g helper enabled, trying its best to make GVT-g working ;-)");
+	}	
 }
 
 void IGFX::GVTGAwareMaker::processFramebufferKext(KernelPatcher &patcher, size_t index, mach_vm_address_t address, size_t size) {
 
-/*	auto framebuffer = Value::of(callbackIGFX->getRealFramebuffer(index));
-	if (framebuffer.isOneOf(&kextIntelKBLFb)) {
-		DBGLOG("igfx", "GVTG: [KBL ] Will setup the fix for KBL platform.");
-		callbackIGFX->modMMIORegistersWriteSupport.replacerList.add(&dKBLPWMFreq1);
-		callbackIGFX->modMMIORegistersWriteSupport.replacerList.add(&dKBLPWMCtrl1);
-	} else if (framebuffer.isOneOf(&kextIntelCFLFb, &kextIntelICLLPFb)) {
-		DBGLOG("igfx", "BLR: [CFL+] Will setup the fix for CFL/ICL platform.");
-		callbackIGFX->modMMIORegistersWriteSupport.replacerList.add(&dCFLPWMFreq1);
-		callbackIGFX->modMMIORegistersWriteSupport.replacerList.add(&dCFLPWMDuty1);
-	 else {
-		SYSLOG("igfx", "GVTG: [ERR!] Found an unsupported platform. Will not perform any injections.");
-	}*/	
+	uint64_t gvtg_magic = 0; // callbackIGFX->readRegister32(controller, VGT_PVINFO_PAGE);
+	CPUInfo::CpuGeneration generation = BaseDeviceInfo::get().cpuGeneration;
+	bool valid_cpu = generation >= CPUInfo::CpuGeneration::Skylake;
+	available = gvtg_magic == kGVTgMagic && valid_cpu;
+	if (available) {
+		SYSLOG("igfx", "GVT-g is available, found GPU generation %d", generation);
+	}
+	else {
+        SYSLOG("igfx", "GVT-g is NOT available. found GPU generation %d", generation);
+	}
+
+	// lets test if we can call here ourself that function....
+	char* hasAccelerator = "__ZN21AppleIntelFramebuffer14HasAcceleratorEv";
+	KernelPatcher::RouteRequest routeRequest =  {
+		hasAccelerator,
+		wrapHasAccelerator,
+		orgHasAccelerator
+	};
+
+	patcher.routeMultiple(index, &routeRequest, 1);
+	//orgHasAccelerator = (fn_ptr)patcher.solveSymbol(index, hasAccelerator);
 }
 
 void IGFX::GVTGAwareMaker::processGraphicsKext(KernelPatcher &patcher, size_t index, mach_vm_address_t address, size_t size) {
 	
+	SYSLOG("igfx", "Try to set up early routing.");
+
+	//CFL only for now
+	// char* symbol = '__ZN31AppleIntelFramebufferController5startEP9IOService';
+	char* ctor = "__ZN31AppleIntelFramebufferControllerC1EPK11OSMetaClass";
+
+	// route request must be set up before that function is called (i think), else it "misses" its
+	// call point in time.
+	KernelPatcher::RouteRequest routeRequest =  {
+		ctor,
+		wrapIntelFramebufferControllerCtor,
+		orgIntelFramebufferControllerCtor,
+	};
+
+	//attach wrapper ? (is index just 1 ?!) 
+	patcher.routeMultiple(index, &routeRequest, 1);
+
+
 	// Address of `__ZN16IntelAcceleratorC1EPK11OSMetaClass` ->IntelAccelerator ctor
 	char* symbol = "__ZN16IntelAcceleratorC1EPK11OSMetaClass";
 	//mach_vm_address_t orgIntelAcceleratorCtor = patcher.solveSymbol(index, symbol);
 	
-	KernelPatcher::RouteRequest routeRequest =  {
+	KernelPatcher::RouteRequest routeRequest2 =  {
 		symbol,
+		wrapIntelAcceleratorCtor,
 		orgIntelAcceleratorCtor,
-		wrapIntelAcceleratorCtor
 	};
 	
-	patcher.routeMultiple(index, &routeRequest, 1);
+	// i have a bad feeling about this :-D 
+	patcher.routeMultiple(index, &routeRequest2, 1);
 }
 
 void* IGFX::GVTGAwareMaker::wrapIntelAcceleratorCtor(void* instance) {
 	//callbackIGFX->readRegister32(controller, )
 	//IntelAccelerator instance ?
 	SYSLOG("igfx", "Routed Accelerator Constructor");
-	void *accelerator = callbackIGFX->modGVTGAwareMaker.orgIntelAcceleratorCtor(instance);
-	return accelerator;
+	//void *accelerator = callbackIGFX->modGVTGAwareMaker.orgIntelAcceleratorCtor(instance);
+	return instance;
+}
+
+void* IGFX::GVTGAwareMaker::wrapIntelFramebufferControllerCtor(void* instance) {
+	SYSLOG("igfx", "Routed FramebufferController Constructor");
+	return instance;
+}
+
+void* IGFX::GVTGAwareMaker::wrapHasAccelerator(void* instance) {
+	fn_ptr fn = callbackIGFX->modGVTGAwareMaker.orgHasAccelerator;
+	//void *controller = callbackIGFX->modGVTGAwareMaker.orgIntelFramebufferControllerCtor(instance);
+	uint64_t value = 2;
+	if (fn) {
+		value = (uint64_t)fn(instance);
+		SYSLOG("igfx", "Framebuffer has Accelerator %d", value);
+	}
+	else {
+		SYSLOG("igfx", "Address of hasAccelerator could not be resolved!");
+	}
+
+	return (void*)value;
 }
