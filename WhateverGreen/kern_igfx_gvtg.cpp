@@ -35,7 +35,7 @@ void IGFX::GVTGAwareMaker::processKernel(KernelPatcher &patcher, DeviceInfo *inf
 
 void IGFX::GVTGAwareMaker::processFramebufferKext(KernelPatcher &patcher, size_t index, mach_vm_address_t address, size_t size) {
 
-	uint64_t gvtg_magic = 0; // callbackIGFX->readRegister32(controller, VGT_PVINFO_PAGE);
+	uint64_t gvtg_magic = callbackIGFX->readRegister32(callbackIGFX->defaultController(), VGT_PVINFO_PAGE);
 	CPUInfo::CpuGeneration generation = BaseDeviceInfo::get().cpuGeneration;
 	bool valid_cpu = generation >= CPUInfo::CpuGeneration::Skylake;
 	available = gvtg_magic == kGVTgMagic && valid_cpu;
@@ -46,38 +46,49 @@ void IGFX::GVTGAwareMaker::processFramebufferKext(KernelPatcher &patcher, size_t
         SYSLOG("igfx", "GVT-g is NOT available. found GPU generation %d", generation);
 	}
 
-	// lets test if we can call here ourself that function....
-	char* hasAccelerator = "__ZN21AppleIntelFramebuffer14HasAcceleratorEv";
-	KernelPatcher::RouteRequest routeRequest =  {
-		hasAccelerator,
-		wrapHasAccelerator,
-		orgHasAccelerator
-	};
-
-	patcher.routeMultiple(index, &routeRequest, 1);
-	//orgHasAccelerator = (fn_ptr)patcher.solveSymbol(index, hasAccelerator);
-}
-
-void IGFX::GVTGAwareMaker::processGraphicsKext(KernelPatcher &patcher, size_t index, mach_vm_address_t address, size_t size) {
-	
-	SYSLOG("igfx", "Try to set up early routing.");
+	//const OSSymbol* oss = OSSymbol::withCString("AppleIntelFramebufferController");
+	//const OSMetaClass *mc = OSMetaClass::getMetaClassWithName(oss);
 
 	//CFL only for now
 	// char* symbol = '__ZN31AppleIntelFramebufferController5startEP9IOService';
 	char* ctor = "__ZN31AppleIntelFramebufferControllerC1EPK11OSMetaClass";
+	char* hasAccelerator = "__ZN21AppleIntelFramebuffer14HasAcceleratorEv";
+
+	orgIntelFramebufferControllerCtor = (fn_ptr)patcher.solveSymbol(index, ctor);
+	orgHasAccelerator = (fn_ptr)patcher.solveSymbol(index, hasAccelerator);
+
+	//try it....
+/*	SYSLOG("igfx", "Danger close.");
+	void* instance = orgIntelFramebufferControllerCtor((void*)mc);
+	void* value = orgHasAccelerator(instance);
+	SYSLOG("igfx", "Framebuffer has Accelerator ? %d", value); */
 
 	// route request must be set up before that function is called (i think), else it "misses" its
 	// call point in time.
-	KernelPatcher::RouteRequest routeRequest =  {
+/*	KernelPatcher::RouteRequest routeRequest =  {
 		ctor,
 		wrapIntelFramebufferControllerCtor,
 		orgIntelFramebufferControllerCtor,
 	};
 
 	//attach wrapper ? (is index just 1 ?!) 
-	patcher.routeMultiple(index, &routeRequest, 1);
+	patcher.routeMultiple(index, &routeRequest, 1);*/
 
 
+	// lets test if we can call here ourself that function....
+	/*char* hasAccelerator = "__ZN21AppleIntelFramebuffer14HasAcceleratorEv";
+	KernelPatcher::RouteRequest routeRequest =  {
+		hasAccelerator,
+		wrapHasAccelerator,
+		orgHasAccelerator
+	};
+
+	patcher.routeMultiple(index, &routeRequest, 1);*/
+	//orgHasAccelerator = (fn_ptr)patcher.solveSymbol(index, hasAccelerator);
+}
+
+void IGFX::GVTGAwareMaker::processGraphicsKext(KernelPatcher &patcher, size_t index, mach_vm_address_t address, size_t size) {
+	
 	// Address of `__ZN16IntelAcceleratorC1EPK11OSMetaClass` ->IntelAccelerator ctor
 	char* symbol = "__ZN16IntelAcceleratorC1EPK11OSMetaClass";
 	//mach_vm_address_t orgIntelAcceleratorCtor = patcher.solveSymbol(index, symbol);
